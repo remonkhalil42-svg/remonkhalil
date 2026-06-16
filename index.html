@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remon Khalil | Cyber Operations Center</title>
+    <style>
+        :root {
+            --bg-dark: #030609;
+            --panel-bg: rgba(6, 11, 19, 0.85);
+            --neon-green: #00ff66;
+            --text-white: #ffffff;
+            --text-dim: #8fa0b0;
+            --glow: 0 0 15px rgba(0, 255, 102, 0.4);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-dark);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-dim);
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* ==========================================
+           1. شاشة التحميل الافتتاحية (Preloader)
+           ========================================== */
+        #loader-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #020406;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s ease, visibility 0.8s;
+        }
+
+        .loader-logo {
+            width: 100px;
+            height: auto;
+            margin-bottom: 30px;
+            /* أنيميشن النبض الضوئي للوجو */
+            animation: logoPulse 2s infinite ease-in-out;
+        }
+
+        .loader-status {
+            font-family: monospace;
+            color: var(--neon-green);
+            font-size: 13px;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            text-shadow: var(--glow);
+        }
+
+        .progress-container {
+            width: 250px;
+            height: 2px;
+            background: #0d1520;
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--neon-green);
+            box-shadow: var(--glow);
+            animation: startLoading 2.8s forwards cubic-bezier(0.1, 0.7, 0.1, 1);
+        }
+
+        /* ==========================================
+           2. خلفية غرفة العمليات (Live Code Matrix)
+           ========================================== */
+        #operations-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            opacity: 0.12; /* خفيفة في الخلفية عشان متتعبش العين */
+        }
+
+        /* ==========================================
+           3. الواجهة الرئيسية والمحتوى (Main Interface)
+           ========================================== */
+        .main-interface {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .center-console {
+            width: 100%;
+            max-width: 1050px;
+            background: var(--panel-bg);
+            border: 1px solid rgba(0, 255, 102, 0.25);
+            border-radius: 8px;
+            backdrop-filter: blur(12px); /* تأثير الزجاج الضبابي الفخم */
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 255, 102, 0.05);
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            overflow: hidden;
+            height: 600px;
+        }
+
+        /* العمود الأيسر: الملف الشخصي والتنقل */
+        .profile-sidebar {
+            background: rgba(4, 7, 12, 0.6);
+            border-right: 1px solid rgba(0, 255, 102, 0.15);
+            padding: 40px 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .avatar-container {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            border: 2px solid var(--neon-green);
+            padding: 5px;
+            box-shadow: var(--glow);
+            margin-bottom: 20px;
+            background: var(--bg-dark);
+        }
+
+        .avatar-container img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .profile-sidebar h1 {
+            color: var(--text-white);
+            font-size: 22px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            letter-spacing: 0.5px;
+        }
+
+        .profile-sidebar .role {
+            color: var(--neon-green);
+            font-family: monospace;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 35px;
+        }
+
+        /* أزرار التنقل المودرن */
+        .nav-menu {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .nav-item {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-dim);
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            text-align: left;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-item:hover {
+            background: rgba(0, 255, 102, 0.05);
+            color: var(--text-white);
+            border-color: rgba(0, 255, 102, 0.15);
+        }
+
+        .nav-item.active {
+            background: rgba(0, 255, 102, 0.12);
+            color: var(--text-white);
+            border-color: var(--neon-green);
+            font-weight: 600;
+            box-shadow: inset 0 0 10px rgba(0, 255, 102, 0.1);
+        }
+
+        /* العمود الأيمن: شاشات العرض */
+        .display-panel {
+            padding: 45px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeInView 0.5s ease forwards;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        h2 {
+            color: var(--text-white);
+            font-size: 24px;
+            font-weight: 500;
+            margin-top: 0;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h2::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(0, 255, 102, 0.2), transparent);
+        }
+
+        /* كروت وجداول البيانات الاحترافية */
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .ops-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            padding: 20px;
+            transition: border-color 0.3s, background 0.3s;
+        }
+
+        .ops-card:hover {
+            border-color: rgba(0, 255, 102, 0.3);
+            background: rgba(0, 255, 102, 0.01);
+        }
+
+        .ops-card h3 {
+            color: var(--text-white);
+            margin-top: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .ops-card p {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 0;
+        }
+
+        /* زر تحميل السيرة الذاتية الفخم */
+        .btn-action {
+            display: inline-block;
+            background: var(--neon-green);
+            color: #020406;
+            font-weight: 600;
+            padding: 14px 32px;
+            border-radius: 4px;
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(0, 255, 102, 0.25);
+            transition: all 0.3s;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 255, 102, 0.45);
+        }
+
+        /* ==========================================
+           4. تأثيرات الحركة (Animations)
+           ========================================== */
+        @keyframes logoPulse {
+            0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 5px rgba(0,255,102,0.2)); }
+            50% { opacity: 1; filter: drop-shadow(0 0 20px rgba(0,255,102,0.6)); }
+        }
+
+        @keyframes startLoading {
+            0% { width: 0%; }
+            10% { width: 15%; }
+            40% { width: 45%; }
+            70% { width: 80%; }
+            100% { width: 100%; }
+        }
+
+        @keyframes fadeInView {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* الموبايل والتجاوب */
+        @media (max-width: 850px) {
+            .center-console { grid-template-columns: 1fr; height: auto; max-height: 90vh; }
+            .profile-sidebar { border-right: none; border-bottom: 1px solid rgba(0, 255, 102, 0.15); padding: 30px; }
+            .display-panel { padding: 30px; }
+            body { overflow: auto; padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. شاشة الترحيب والتحميل (لوجو أولاً) -->
+    <div id="loader-screen">
+        <!-- ضع هنا لوجو المحل أو اللوجو الخاص بك -->
+        <img src="logo.png" alt="Logo" class="loader-logo">
+        <div class="loader-status" id="load-text">CONNECTING TO NODE_</div>
+        <div class="progress-container">
+            <div class="progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- كود خلفية غرفة العمليات (أكواد متحركة) -->
+    <canvas id="operations-canvas"></canvas>
+
+    <!-- 3. الواجهة الرئيسية (تفتح بعد التحميل وصورتك جوه) -->
+    <div class="main-interface">
+        <div class="center-console">
+            
+            <!-- القائمة الجانبية (الصورة الشخصية مدمجة هنا) -->
+            <div class="profile-sidebar">
+                <div class="avatar-container">
+                    <!-- ضع صورتك الشخصية هنا -->
+                    <img src="your-photo.jpg" alt="Remon Khalil">
+                </div>
+                <h1>Remon Khalil</h1>
+                <div class="role">IT Infrastructure Specialist</div>
+                
+                <div class="nav-menu">
+                    <button class="nav-item active" onclick="changeView(this, 'view-overview')">System Overview <span>01</span></button>
+                    <button class="nav-item" onclick="changeView(this, 'view-specs')">Specifications <span>02</span></button>
+                    <button class="nav-item" onclick="changeView(this, 'view-portfolio')">Deployments <span>03</span></button>
+                    <button class="nav-item" onclick="changeView(this, 'view-cv')">Access Terminal (CV) <span>04</span></button>
+                </div>
+            </div>
+
+            <!-- ساحة العرض الرئيسية للمحتوى -->
+            <div class="display-panel">
+                
+                <!-- القسم الأول: الأوفر فيو -->
+                <div id="view-overview" class="view-section active">
+                    <h2>IT system admin</h2>
+                    <p style="font-size: 16px; line-height: 1.7; margin-bottom: 30px;">
+  Infrastructure Administrator- Active Directory - Network Administration -  Mail Server Administration - Backup & Disaster Recovery - Synology Solutions| Software Developer                    </p>
+                    <div class="data-grid">
+                        <div class="ops-card">
+                            <h3>Core Operations</h3>
+                            <p>Network Load Balancing, Failover Cluster Configuration, WAN/LAN Routing Protocols.</p>
+                        </div>
+                        <div class="ops-card">
+                            <h3>Security Perimeter</h3>
+                            <p>Hardware Firewall Rulesets, Traffic Isolation Layers, and Endpoint Shielding.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- القسم الثاني: البيانات الشخصية -->
+                <div id="view-specs" class="view-section">
+                    <h2>SYSTEM SPECIFICATIONS</h2>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 15px; color: var(--text-white);">
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 18px 0; color: var(--text-dim);">IDENTIFIER</td>
+                            <td>Remon Khalil</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 18px 0; color: var(--text-dim);">TIMESTAMPS (DOB)</td>
+                            <td>25 / 07 / 1996</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 18px 0; color: var(--text-dim);">ASSIGNMENT</td>
+                            <td style="color: var(--neon-green);">IT Infrastructure and Systems Mainframe</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- القسم الثالث: معرض الأعمال -->
+                <div id="view-portfolio" class="view-section">
+                    <h2>ACTIVE DEPLOYMENTS</h2>
+                    <div class="data-grid">
+                        <div class="ops-card">
+                            <h3>WAN Multi-Load Balance</h3>
+                            <p>Aggregated diverse ISP connections into single cohesive gateways with active script routing matrix optimizations.</p>
+                        </div>
+                        <div class="ops-card">
+                            <h3>Enterprise Edge Firewalls</h3>
+                            <p>Architected granular security rulesets on deep-packet filtering networks to block external vectors.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- القسم الرابع: التحميل والـ CV -->
+                <div id="view-cv" class="view-section" style="text-align: center; padding-top: 40px;">
+                    <h2>ENCRYPTED RESUME PACKET</h2>
+                    <p style="max-width: 500px; margin: 0 auto 35px auto; font-size: 15px; line-height: 1.6;">
+Request clearance to pull verified documentation                     </p>
+                    <a href="remon_cv.pdf" download class="btn-action">DOWNLOAD SECURE CV (PDF)</a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- كود محاكي غرفة العمليات والتحميل الذكي -->
+    <script>
+        // 1. تشغيل وتحديث نصوص شاشة التحميل الافتتاحية مع اللوجو
+        const loadPhrases = [
+            "DECRYPTING CORE FILES...",
+            "SYNCHRONIZING NETWORK GRIDS...",
+            "PROVISIONING DASHBOARD CONSOLE...",
+            "ACCESS VERIFIED. BOOTING..."
+        ];
+        let currentPhrase = 0;
+        const textLogger = setInterval(() => {
+            if(currentPhrase < loadPhrases.length) {
+                document.getElementById('load-text').innerText = loadPhrases[currentPhrase];
+                currentPhrase++;
+            }
+        }, 600);
+
+        // إنهاء شاشة التحميل وسحبها لإظهار لوحة التحكم وصورتك جوه
+        setTimeout(() => {
+            clearInterval(textLogger);
+            const loader = document.getElementById('loader-screen');
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 800);
+        }, 2800);
+
+        // 2. نظام التنقل الاحترافي الفخم بين التبويبات
+        function changeView(button, viewId) {
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
+            
+            button.classList.add('active');
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        // 3. أنيميشن غرفة العمليات الخلفية (Matrix Operations Lines)
+        const canvas = document.getElementById('operations-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', initCanvas);
+        initCanvas();
+
+        // كود ومصفوفات الرموز البرمجية للشبكات والهاكرز
+        const hexSymbols = "0123456789ABCDEF//_X_SYSTEM_NODE_OK_CONNECT_";
+        const chars = hexSymbols.split('');
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+
+        for (let i = 0; i < columns; i++) {
+            drops[i] = Math.random() * -100; // جعل البدايات متفاوتة بشكل عشوائي فخم
+        }
+
+        function drawOperationsGrid() {
+            ctx.fillStyle = 'rgba(3, 6, 9, 0.06)'; // مسح الشاشة بتأثير التلاشي
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#00ff66'; // لون الرموز المتوهج
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.98) {
+                    drops[i] = 0;
+                }
+                drops[i] += 1.5; // سرعة الهبوط والانسيابية
+            }
+        }
+        setInterval(drawOperationsGrid, 25);
+    </script>
+</body>
+</html>
